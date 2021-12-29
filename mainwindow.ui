@@ -2,16 +2,19 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>656</width>
-    <height>58</height>
+    <height>61</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>荧光强度计算程序</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -20,7 +23,7 @@
      <x>0</x>
      <y>0</y>
      <width>656</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_1">
@@ -34,7 +37,6 @@
     <property name="title">
      <string>操作</string>
     </property>
-    <addaction name="actiongray"/>
     <addaction name="actionsegment"/>
    </widget>
    <addaction name="menu_1"/>
@@ -43,7 +45,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionsave">
    <property name="text">
-    <string>save</string>
+    <string>保存结果</string>
    </property>
   </action>
   <action name="actionexit">
@@ -53,7 +55,7 @@
   </action>
   <action name="actionopen">
    <property name="text">
-    <string>open</string>
+    <string>导入图像</string>
    </property>
   </action>
   <action name="actionnew">
@@ -63,12 +65,12 @@
   </action>
   <action name="actiongray">
    <property name="text">
-    <string>gray</string>
+    <string>灰度化</string>
    </property>
   </action>
   <action name="actionsegment">
    <property name="text">
-    <string>segment</string>
+    <string>运行</string>
    </property>
   </action>
  </widget>

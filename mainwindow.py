@@ -14,12 +14,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(656, 58)
+        MainWindow.setWindowModality(QtCore.Qt.NonModal)
+        MainWindow.resize(656, 61)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 656, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 656, 23))
         self.menubar.setObjectName("menubar")
         self.menu_1 = QtWidgets.QMenu(self.menubar)
         self.menu_1.setObjectName("menu_1")
@@ -43,7 +44,6 @@ class Ui_MainWindow(object):
         self.actionsegment.setObjectName("actionsegment")
         self.menu_1.addAction(self.actionopen)
         self.menu_1.addAction(self.actionsave)
-        self.menu.addAction(self.actiongray)
         self.menu.addAction(self.actionsegment)
         self.menubar.addAction(self.menu_1.menuAction())
         self.menubar.addAction(self.menu.menuAction())
@@ -53,12 +53,12 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "荧光强度计算程序"))
         self.menu_1.setTitle(_translate("MainWindow", "文件"))
         self.menu.setTitle(_translate("MainWindow", "操作"))
-        self.actionsave.setText(_translate("MainWindow", "save"))
+        self.actionsave.setText(_translate("MainWindow", "保存结果"))
         self.actionexit.setText(_translate("MainWindow", "exit"))
-        self.actionopen.setText(_translate("MainWindow", "open"))
+        self.actionopen.setText(_translate("MainWindow", "导入图像"))
         self.actionnew.setText(_translate("MainWindow", "new"))
-        self.actiongray.setText(_translate("MainWindow", "gray"))
-        self.actionsegment.setText(_translate("MainWindow", "segment"))
+        self.actiongray.setText(_translate("MainWindow", "灰度化"))
+        self.actionsegment.setText(_translate("MainWindow", "运行"))
