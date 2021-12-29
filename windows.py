@@ -10,25 +10,23 @@ from stardist.plot import render_label
 import matplotlib.pyplot as plt
 
 class Picwin(QMainWindow,Ui_picwin):
-    submitted = QtCore.pyqtSignal(np.ndarray)
     close_sub =QtCore.pyqtSignal()
-    def __init__(self):
+    def __init__(self,pic):
         super(Picwin, self).__init__()
         self.setupUi(self)
-    def open(self):
-        #imgname 是图片的路径
-        imgName,imgtype = QFileDialog.getOpenFileName(self, "打开图片", "", "All Files(*);;*.jpg;;*.png")
-        if imgName == '':
-            pass  # 防止关闭或取消导入关闭所有页面
-        else:
-            print("open success")
-            self.jpg = cv2.imread(imgName)
-            self.submitted.emit(self.jpg)
-            #输出到label ndarry-> qimage -> qpixmap
-            self.label.setPixmap(np2qpixmap(self.jpg))
-            self.label.adjustSize()
-            self.resize(self.jpg.shape[1],self.jpg.shape[0])
-            self.show()
+        self.img = pic.copy()
+        self.show()
+
+    def flush(self):
+        #将pic显示出来
+        qimg =QtGui.QImage(self.img,self.img.shape[1],self.img.shape[0],\
+                                self.img.shape[1]*3,QtGui.QImage.Format_BGR888)
+        self.label.setPixmap(QtGui.QPixmap.fromImage(qimg))
+        self.label.adjustSize()
+        self.resize(self.img.shape[1], self.img.shape[0])
+        self.show()
+
+
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         self.close_sub.emit()
 
@@ -53,63 +51,110 @@ class Mainwin(QMainWindow,Ui_MainWindow):
         super(Mainwin, self).__init__()
         self.setupUi(self)
         self.move(300,100)
-        self.ispic=False
-        self.isgray =False
-        self.issegment = False
+        self.isCell=False
+        self.isFlu =False
+        self.isSegment = False
 
         self.actionopen.triggered.connect(self.act_open)
-        self.actiongray.triggered.connect(self.act_gray)
+        self.actionopenFlu.triggered.connect(self.act_openFlu)
         self.actionsegment.triggered.connect(self.act_segment)
-    def update_img(self,img):
-        self.img=img
-        self.ispic=True
-        self.isgray=False
-    def picclose(self):
-        self.ispic=False
-        self.isgray=False
+
+    def pwCellClose(self):
+        self.isCell=False
+    def pwFluClose(self):
+        self.isFlu=False
+    def pwMaskClose(self):
+        self.isSegment=False
 
     def act_open(self):
-        self.pw =Picwin()
-        self.pw.submitted.connect(self.update_img)
-        self.pw.open()
-        self.pw.move(self.x(),self.y()+self.height()*1.5)
-        self.pw.close_sub.connect(self.picclose)
-
-    def act_gray(self):
-        if(self.isgray):
-            pass
-        elif(not self.ispic):
-            QtWidgets.QMessageBox.critical(self, "错误", "请先在 文件->open 导入图片")
+        #imgName, imgtype = QFileDialog.getOpenFileName(self, "打开细胞图片", "", "All Files(*);;*.jpg;;*.png")
+        imgName = "./blue.tif"
+        if imgName == '':
+            pass  # 防止关闭或取消导入关闭所有页面
         else:
-            self.img= cv2.cvtColor(self.img , cv2.COLOR_BGR2GRAY)
-            self.pw.label.setPixmap(np2qpixmap(cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR)))
-           # self.gray_pw.show()
-            self.isgray=True
+            #cv2_BGR
+            self.imgCell = cv2.imread(imgName)
+            self.pwCell = Picwin(self.imgCell)
+
+            self.pwCell.flush()
+            self.pwCell.move(self.x(),self.y()+self.height()*1.5)
+            self.isCell=True
+            self.pwCell.close_sub.connect(self.pwCellClose)
+
+    def act_openFlu(self):
+        #imgName, imgtype = QFileDialog.getOpenFileName(self, "打开荧光图像", "", "All Files(*);;*.jpg;;*.png")
+        imgName = "./green.tif"
+        if imgName == '':
+            pass  # 防止关闭或取消导入关闭所有页面
+        else:
+            # cv2_BGR
+            self.imgFlu = cv2.imread(imgName)
+            self.pwFlu = Picwin(self.imgFlu)
+            self.pwFlu.flush()
+            self.pwFlu.move(self.x()+self.imgCell.shape[1], self.y() + self.height() * 1.5)
+            self.isFlu = True
+            self.pwFlu.close_sub.connect(self.pwFluClose)
 
     def act_segment(self):
-        if(self.isgray and self.ispic):
-            self.mask = st_segmentation(self.img)
-            self.issegment = True
-            self.maskwin = Maskwin(self.mask)
-            self.maskwin.move(self.x() + self.mask.shape[1], self.y() + self.height() * 1.5)
-            print("segment success")
+        # if(not self.isCell ):
+        #     QtWidgets.QMessageBox.critical(self, "错误", "需要导入细胞图像")
+        # elif(not self.isFlu):
+        #     QtWidgets.QMessageBox.critical(self, "错误", "需要导入荧光图像")
+        # elif(self.imgCell.shape[0]!=self.imgFlu.shape[0] or \
+        #      self.imgCell.shape[1]!=self.imgFlu.shape[1]):
+        #     QtWidgets.QMessageBox.critical(self, "错误", "需要保证图像大小一致")
+        # else:
+            ## imgMask 是 1，2，3，4 等mask值
+            gray = cv2.cvtColor(self.imgCell,cv2.COLOR_BGR2GRAY)
+            self.imgMask = st_segmentation(gray)
+            pp=render_label(self.imgMask)
+            pp = (pp * 255.0).astype(np.uint8)
+            pp=cv2.cvtColor(pp,cv2.COLOR_RGBA2BGR)
+            self.datacompute()
+            #创建窗口
+            self.pwMask = Picwin(pp)
+            self.pwMask.flush()
+            self.pwMask.move(self.x() + self.imgCell.shape[1]*2, self.y() + self.height() * 1.5)
+            self.isSegment = True
+            self.pwMask.close_sub.connect(self.pwMaskClose)
 
-        else:
-            QtWidgets.QMessageBox.critical(self, "错误", "需要导入灰度图")
+
+        #
+        # if(self.isgray and self.ispic):
+        #     self.mask = st_segmentation(self.img)
+        #     self.issegment = True
+        #     self.maskwin = Maskwin(self.mask)
+        #     self.maskwin.move(self.x() + self.mask.shape[1], self.y() + self.height() * 1.5)
+        #     print("segment success")
+        #
+        # else:
+        #     QtWidgets.QMessageBox.critical(self, "错误", "需要导入灰度图")
+        #
+    def datacompute(self):
+        nuc_num=0
+        for i in range(self.imgMask.shape[0]):
+            for j in range(self.imgMask.shape[1]):
+                nuc_num=max(nuc_num,self.imgMask[i][j])
+        print(nuc_num)
+        #area, int_gray, min_gray, max_gray, mean_gray
+        imgGray = cv2.cvtColor(self.imgFlu,cv2.COLOR_BGR2GRAY)
+        self.data = np.zeros((nuc_num+1, 5 ),dtype=int)
+        for i in range(self.imgMask.shape[0]):
+            for j in range(self.imgMask.shape[1]):
+                 if(self.imgMask[i][j]!=0):
+                     id = int(self.imgMask[i][j])
+                     gray=int(imgGray[i][j])
+                     self.data[id][0] += 1
+                     self.data[id][1] +=gray
+                     self.data[id][2] = min(self.data[id][2], gray)
+                     self.data[id][3] = max(self.data[id][3], gray)
+        for i in range (1,self.data.shape[0]):
+            self.data[i][4]=self.data[i][1]/self.data[i][0]
+            print(self.data[i][4])
 
 
 
 
-
-
-
-#function
-def np2qpixmap(frame):
-    # rgb ndarry 2 qpixmap
-    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    print(frame.dtype)
-    img = QtGui.QImage(frame, frame.shape[1], frame.shape[0], frame.shape[1]*3 ,QtGui.QImage.Format_BGR888)
-    return QtGui.QPixmap.fromImage(img)
 
 def qt_image_to_array(img, share_memory=False):
     """ Creates a numpy array from a QImage.
