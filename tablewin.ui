@@ -27,6 +27,9 @@
      <height>781</height>
     </rect>
    </property>
+   <property name="sortingEnabled">
+    <bool>true</bool>
+   </property>
    <attribute name="horizontalHeaderDefaultSectionSize">
     <number>80</number>
    </attribute>

@@ -53,6 +53,7 @@ class Ui_Table(object):
     def retranslateUi(self, Table):
         _translate = QtCore.QCoreApplication.translate
         Table.setWindowTitle(_translate("Table", "表格"))
+        self.tableWidget.setSortingEnabled(True)
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("Table", "面积"))
         item = self.tableWidget.horizontalHeaderItem(1)
