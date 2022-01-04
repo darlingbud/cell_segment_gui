@@ -19,6 +19,7 @@ class Picwin(QMainWindow, Ui_picwin):
         super(Picwin, self).__init__()
         self.setupUi(self)
         self.img = pic.copy()
+        self.imgStatic =pic.copy()
         self.show()
 
     def flush(self):
@@ -35,22 +36,24 @@ class Picwin(QMainWindow, Ui_picwin):
 
 
 class Tablewin(QMainWindow, Ui_Table):
+    select_sub = QtCore.pyqtSignal(np.ndarray)
+
     def __init__(self, data):
         # data : area, mean_gray, min_gray, max_gray, int_gray
         super(Tablewin, self).__init__()
         self.setupUi(self)
-        #添加按钮
-
-
+        self.num =data.shape[0]
         self.tableWidget.setRowCount(data.shape[0] - 1)  # 344
-        self.tableWidget.setColumnCount(data.shape[1])  # 5
+        self.tableWidget.setColumnCount(data.shape[1]+1)  # 5
         for i in range(1, data.shape[0]):
+            item = QtWidgets.QTableWidgetItem()
+            self.tableWidget.setItem(i - 1, 0, item)
+            item.setData(QtCore.Qt.DisplayRole,i)
             for j in range(0, data.shape[1]):
                 item=QtWidgets.QTableWidgetItem()
-                item = QtWidgets.QTableWidgetItem(str(data[i][j]))
-
-                self.tableWidget.setItem(i - 1, j, item)
-                #item.setData(QtCore.Qt.DisplayRole, int(data[i][j]))
+                #item = QtWidgets.QTableWidgetItem(str(data[i][j]))
+                self.tableWidget.setItem(i - 1, j+1 , item)
+                item.setData(QtCore.Qt.DisplayRole, int(data[i][j]))
         self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         # self.tableWidget.cellClicked.connect(self.getPosContent)
@@ -59,27 +62,19 @@ class Tablewin(QMainWindow, Ui_Table):
         self.pushButton.pressed.connect(self.action_select_all)
         self.pushButton_2.pressed.connect(self.action_select_non)
 
-        #sort函数
-        #self.tableWidget.setSortingEnabled(True)
-        #QtWidgets.QFileSystemModel.sort()
-        #self.tableWidget.sortItems()
-
-        #设置排序
         self.show()
 
-    def sort(self,row):
-        print("sort")
-
-    def getPosContent(self, row, col):
-        print("本次的选择是")
+    def getPosContent(self):
         items = self.itemSelect.selectedRows()
+        selnum=np.zeros((self.num))
         for i in range(0, items.__len__()):
-            introw = items[i].row()
-            print(introw)
+            row= items[i].data(0)
+            selnum[row]=1
+        self.select_sub.emit(selnum)
 
     def action_select_all(self):
         print("全选")
-        #self.itemSelect.select()
+        self.tableWidget.selectAll()
 
     def action_select_non(self):
         print("全不选")
@@ -166,8 +161,28 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             self.pwMask.close_sub.connect(self.pwMaskClose)
             self.pwTable = Tablewin(self.data)
             self.pwTable.move(self.x() + self.imgCell.shape[1] * 3, self.y() + self.height() * 1.5)
+            self.pwTable.select_sub.connect(self.drawContours)
 
-    #
+    def drawContours(self, list):
+        #在前三个图绘制轮廓
+        self.imgSelect = self.imgMask.copy()
+        for i in range(self.imgSelect.shape[0]):
+            for j in range(self.imgSelect.shape[1]):
+                if(list[self.imgSelect[i][j]]==0):
+                    self.imgSelect[i][j]=0
+        contours, im = cv2.findContours(self.imgSelect, cv2.RETR_FLOODFILL, cv2.CHAIN_APPROX_SIMPLE)
+        self.pwCell.img=self.pwCell.imgStatic.copy()
+        cv2.drawContours(self.pwCell.img, contours, -1, (255, 255, 255), thickness=1, lineType=8)
+        self.pwCell.flush()
+        self.pwFlu.img=self.pwFlu.imgStatic.copy()
+        cv2.drawContours(self.pwFlu.img, contours, -1, (255, 255, 255), thickness=1, lineType=8)
+        self.pwFlu.flush()
+        self.pwMask.img=self.pwMask.imgStatic.copy()
+        cv2.drawContours(self.pwMask.img, contours, -1, (255, 255, 255), thickness=1, lineType=8)
+        self.pwMask.flush()
+
+
+
     def datacompute(self):
         nuc_num = 0
         for i in range(self.imgMask.shape[0]):
