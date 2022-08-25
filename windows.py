@@ -1,4 +1,8 @@
 #from curses import qflush
+from ctypes import resize
+from select import select
+from time import sleep
+from tkinter import Widget
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog,QInputDialog
 from mainwindow import Ui_MainWindow
 from picwin import Ui_picwin
@@ -23,18 +27,28 @@ class Picwin(QMainWindow, Ui_picwin):
         self.img = pic.copy()
         self.imgStatic = pic.copy()
         self.show()
+    def first_flush(self):
+        self.resize(self.img.shape[1],self.img.shape[0])
+        self.flush()
+
 
     def flush(self):
         # 将pic显示出来
         qimg = QtGui.QImage(self.img, self.img.shape[1], self.img.shape[0], \
                             self.img.shape[1] * 3, QtGui.QImage.Format_BGR888)
+ 
         self.label.setPixmap(QtGui.QPixmap.fromImage(qimg))
-        self.label.adjustSize()
-        self.resize(self.img.shape[1], self.img.shape[0])
+        self.label.adjustSize() 
+        self.label.setScaledContents(True)
         self.show()
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         self.close_sub.emit()
+    
+    def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
+
+        self.label.resize(self.size())
+        #return super().paintEvent(a0)
 
 
 class Tablewin(QMainWindow, Ui_Table):
@@ -85,6 +99,9 @@ class Tablewin(QMainWindow, Ui_Table):
 
     def action_select_non(self):
         self.itemSelect.clearSelection()
+    
+    def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
+        self.label.resize(self.size())
 
 
 class Mainwin(QMainWindow, Ui_MainWindow):
@@ -123,7 +140,7 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             self.imgCell = cv2.imread(imgName)
             self.pwCell = Picwin(self.imgCell)
 
-            self.pwCell.flush()
+            self.pwCell.first_flush()
             self.pwCell.move(self.x(), self.y() + self.height() * 1.5)
             self.isCell = True
             self.pwCell.close_sub.connect(self.pwCellClose)
@@ -141,8 +158,8 @@ class Mainwin(QMainWindow, Ui_MainWindow):
                 self.imname=imgName
                 self.imgFlu = cv2.imread(imgName)
                 self.pwFlu = Picwin(self.imgFlu)
-                self.pwFlu.flush()
-                self.pwFlu.move(self.x() + self.imgCell.shape[1], self.y() + self.height() * 1.5)
+                self.pwFlu.first_flush()
+                self.pwFlu.move(self.x() + self.pwCell.width(), self.y() + self.height() * 1.5)
                 self.isFlu = True
                 self.pwFlu.close_sub.connect(self.pwFluClose)
 
@@ -161,16 +178,20 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             pp = render_label(self.imgMask)
             pp = (pp * 255.0).astype(np.uint8)
             pp = cv2.cvtColor(pp, cv2.COLOR_RGBA2BGR)
+            print(type(pp))
+            pp=cv2.resize(pp,[int(pp.shape[0]/3),int(pp.shape[1]/3)])
             self.datacompute()
             # 创建窗口
             self.pwMask = Picwin(pp)
-            self.pwMask.flush()
+            self.pwMask.first_flush()
             #self.pwMask.move(self.x() + self.imgCell.shape[1] * 2, self.y() + self.height() * 1.5)
-            self.pwMask.move(self.x() , self.y() + self.height() * 1.5)
+            self.pwMask.move(self.x()+(self.pwCell.width()+self.pwFlu.width())/2 \
+                , self.y() + self.height() * 1.5+self.pwCell.height())
             self.isSegment = True
             self.pwMask.close_sub.connect(self.pwMaskClose)
             self.pwTable = Tablewin(self.data)
-            self.pwTable.move(self.x() + self.imgCell.shape[1] * 3, self.y() + self.height() * 1.5)
+            self.pwTable.move(self.x() +self.pwCell.width()+self.pwFlu.width() \
+                , self.y() + self.height() * 1.5)
             self.pwTable.select_sub.connect(self.drawContours)
 
     def drawContours(self, list):
@@ -225,4 +246,4 @@ class Mainwin(QMainWindow, Ui_MainWindow):
                 self.data[i][1]=0
             else:
                 self.data[i][1] = self.data[i][4] / self.data[i][0]
-
+        
