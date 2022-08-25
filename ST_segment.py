@@ -11,5 +11,5 @@ def st_segmentation(img):
     model = StarDist2D.from_pretrained('2D_versatile_fluo')
     # img = test_image_nuclei_2d()
     labels,_= model.predict_instances(normalize(img))
-    np.save('lables.npy',labels)
+    #np.save('lables.npy',labels)
     return labels
