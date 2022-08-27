@@ -100,8 +100,8 @@ class Tablewin(QMainWindow, Ui_Table):
     def action_select_non(self):
         self.itemSelect.clearSelection()
     
-    def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
-        self.label.resize(self.size())
+    #def paintEvent(self, a0: QtGui.QPaintEvent) -> None:
+     #   self.label.resize(self.size())
 
 
 class Mainwin(QMainWindow, Ui_MainWindow):
@@ -178,8 +178,8 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             pp = render_label(self.imgMask)
             pp = (pp * 255.0).astype(np.uint8)
             pp = cv2.cvtColor(pp, cv2.COLOR_RGBA2BGR)
-            print(type(pp))
-            pp=cv2.resize(pp,[int(pp.shape[0]/3),int(pp.shape[1]/3)])
+            
+            #pp=cv2.resize(pp,[int(pp.shape[0]/3),int(pp.shape[1]/3)])
             self.datacompute()
             # 创建窗口
             self.pwMask = Picwin(pp)

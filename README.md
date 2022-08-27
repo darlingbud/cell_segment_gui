@@ -1,2 +1,2 @@
 # cell_segment_gui
-segment by stardist (tensorflow)  , GUI by pyqt
+segment by stardist (pytorch)  , GUI by pyqt
