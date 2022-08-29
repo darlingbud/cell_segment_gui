@@ -13,7 +13,7 @@ import pandas as pd
 import sys
 import cv2
 import numpy as np
-from ST_segment import st_segmentation
+from predict import st_segmentation
 from stardist.plot import render_label
 import matplotlib.pyplot as plt
 
@@ -132,7 +132,7 @@ class Mainwin(QMainWindow, Ui_MainWindow):
 
     def act_open(self):
         imgName, imgtype = QFileDialog.getOpenFileName(self, "打开细胞图片", "", "All Files(*);;*.jpg;;*.png")
-        #imgName = "./blue.tif"
+        #imgName = "./pic/28/blue.tif"
         if imgName == '':
             pass  # 防止关闭或取消导入关闭所有页面
         else:
@@ -150,7 +150,7 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             QtWidgets.QMessageBox.critical(self, "错误", "需要先导入细胞图像")
         else:
             imgName, imgtype = QFileDialog.getOpenFileName(self, "打开荧光图像", "", "All Files(*);;*.jpg;;*.png")
-            #imgName = "./green.tif"
+            #imgName = "./pic/28/red.tif"
             if imgName == '':
                 pass  # 防止关闭或取消导入关闭所有页面
             else:
@@ -193,6 +193,13 @@ class Mainwin(QMainWindow, Ui_MainWindow):
             self.pwTable.move(self.x() +self.pwCell.width()+self.pwFlu.width() \
                 , self.y() + self.height() * 1.5)
             self.pwTable.select_sub.connect(self.drawContours)
+    # def act_segment(self):
+    #     gray=cv2.cvtColor(self.imgCell,cv2.COLOR_BGR2GRAY)
+    #     self.imgMask=st_segmentation(gray)
+    #     plt.figure()
+    #     plt.imshow(self.imgMask)
+    #     plt.show()
+        
 
     def drawContours(self, list):
         # 在前三个图绘制轮廓
